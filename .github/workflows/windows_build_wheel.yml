@@ -1,0 +1,57 @@
+name: Windows Build PyTorch3D Wheel
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build_windows_wheel:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12"]
+        pytorch-version: ["2.3.1"]
+        cuda-version: ["12.1"]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: v0.7.6  # 切换到0.7.6版本
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install PyTorch with CUDA
+      run: |
+        pip install torch==${{ matrix.pytorch-version }} torchvision --index-url https://download.pytorch.org/whl/cu${{ matrix.cuda-version }}
+
+    - name: Install other dependencies
+      run: |
+        pip install iopath
+        pip install ninja
+        conda install -c bottler nvidiacub
+
+    - name: Set environment variables
+      run: |
+        echo "FORCE_CUDA=1" >> $GITHUB_ENV
+        echo "PYTORCH3D_NO_NINJA=0" >> $GITHUB_ENV
+
+    - name: Build wheel
+      run: |
+        python setup.py bdist_wheel
+
+    - name: Upload wheel as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: pytorch3d-wheels
+        path: dist/*.whl
+        retention-days: 30
