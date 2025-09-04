@@ -38,7 +38,8 @@ jobs:
       run: |
         pip install iopath
         pip install ninja
-        conda install -c bottler nvidiacub
+        # conda install -c bottler nvidiacub
+        pip install nvidia-cublas-cu12 nvidia-cuda-runtime-cu12
 
     - name: Set environment variables
       run: |
